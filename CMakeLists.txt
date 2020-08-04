@@ -18,6 +18,7 @@ include(cmake/base.cmake)
 # Project definition
 COMPUTE_PROJECT_ARGS(PROJECT_ARGS LANGUAGES CXX)
 project(${PROJECT_NAME} ${PROJECT_ARGS})
+CHECK_MINIMAL_CXX_STANDARD(14 ENFORCE)
 
 # Main Library
 set(${PROJECT_NAME}_HEADERS
