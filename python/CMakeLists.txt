@@ -1,5 +1,6 @@
 set(${PY_NAME}_SOURCES
   croco.cpp
+  ext-forces.cpp
   gepadd.cpp
   main.cpp
   )

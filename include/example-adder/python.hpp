@@ -9,6 +9,7 @@ namespace gepetto {
 namespace example {
 void exposeExampleAdder();
 void exposeActionUniEx();
+void exposeDifferentialActionFreeFwdDynamicsExtForces();
 }  // namespace example
 }  // namespace gepetto
 

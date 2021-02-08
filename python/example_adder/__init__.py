@@ -1,2 +1,2 @@
 import crocoddyl
-from .example_adder import ActionModelUniEx, add, sub  # noqa: F401
+from .example_adder import DifferentialActionModelFreeFwdDynamicsExtForces, ActionModelUniEx, add, sub  # noqa: F401
