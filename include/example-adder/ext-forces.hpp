@@ -23,16 +23,21 @@
 #include "crocoddyl/multibody/states/multibody.hpp"
 #include "crocoddyl/core/utils/exception.hpp"
 
-namespace crocoddyl {
+#include "example-adder/fwd.hpp"
+
+namespace gepetto {
+namespace example {
+
+  using namespace crocoddyl;
 
 template <typename _Scalar>
-class DifferentialActionModelFreeFwdDynamicsTpl : public DifferentialActionModelAbstractTpl<_Scalar> {
+class DifferentialActionModelFreeFwdDynamicsExtForcesTpl : public DifferentialActionModelAbstractTpl<_Scalar> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   typedef _Scalar Scalar;
   typedef DifferentialActionModelAbstractTpl<Scalar> Base;
-  typedef DifferentialActionDataFreeFwdDynamicsTpl<Scalar> Data;
+  typedef DifferentialActionDataFreeFwdDynamicsExtForcesTpl<Scalar> Data;
   typedef MathBaseTpl<Scalar> MathBase;
   typedef CostModelSumTpl<Scalar> CostModelSum;
   typedef StateMultibodyTpl<Scalar> StateMultibody;
@@ -41,10 +46,10 @@ class DifferentialActionModelFreeFwdDynamicsTpl : public DifferentialActionModel
   typedef typename MathBase::VectorXs VectorXs;
   typedef typename MathBase::MatrixXs MatrixXs;
 
-  DifferentialActionModelFreeFwdDynamicsTpl(boost::shared_ptr<StateMultibody> state,
+  DifferentialActionModelFreeFwdDynamicsExtForcesTpl(boost::shared_ptr<StateMultibody> state,
                                             boost::shared_ptr<ActuationModelAbstract> actuation,
                                             boost::shared_ptr<CostModelSum> costs);
-  virtual ~DifferentialActionModelFreeFwdDynamicsTpl();
+  virtual ~DifferentialActionModelFreeFwdDynamicsExtForcesTpl();
 
   virtual void calc(const boost::shared_ptr<DifferentialActionDataAbstract>& data, const Eigen::Ref<const VectorXs>& x,
                     const Eigen::Ref<const VectorXs>& u);
@@ -81,7 +86,7 @@ class DifferentialActionModelFreeFwdDynamicsTpl : public DifferentialActionModel
 };
 
 template <typename _Scalar>
-struct DifferentialActionDataFreeFwdDynamicsTpl : public DifferentialActionDataAbstractTpl<_Scalar> {
+struct DifferentialActionDataFreeFwdDynamicsExtForcesTpl : public DifferentialActionDataAbstractTpl<_Scalar> {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   typedef _Scalar Scalar;
   typedef MathBaseTpl<Scalar> MathBase;
@@ -90,7 +95,7 @@ struct DifferentialActionDataFreeFwdDynamicsTpl : public DifferentialActionDataA
   typedef typename MathBase::MatrixXs MatrixXs;
 
   template <template <typename Scalar> class Model>
-  explicit DifferentialActionDataFreeFwdDynamicsTpl(Model<Scalar>* const model)
+  explicit DifferentialActionDataFreeFwdDynamicsExtForcesTpl(Model<Scalar>* const model)
       : Base(model),
         pinocchio(pinocchio::DataTpl<Scalar>(model->get_pinocchio())),
         multibody(&pinocchio, model->get_actuation()->createData()),
@@ -127,10 +132,11 @@ struct DifferentialActionDataFreeFwdDynamicsTpl : public DifferentialActionDataA
 };
 
 }  // namespace crocoddyl
+}
 
 /* --- Details -------------------------------------------------------------- */
 /* --- Details -------------------------------------------------------------- */
 /* --- Details -------------------------------------------------------------- */
-#include <crocoddyl/multibody/actions/free-fwddyn.hxx>
+#include <example-adder/ext-forces.hxx>
 
 #endif  // CROCODDYL_MULTIBODY_ACTIONS_FREE_FWDDYN_HPP_

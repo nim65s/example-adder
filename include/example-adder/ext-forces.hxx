@@ -7,7 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "crocoddyl/core/utils/exception.hpp"
-#include "crocoddyl/multibody/actions/free-fwddyn.hpp"
+#include "example-adder/ext-forces.hpp"
 
 #include <pinocchio/algorithm/aba.hpp>
 #include <pinocchio/algorithm/aba-derivatives.hpp>
@@ -19,10 +19,11 @@
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/cholesky.hpp>
 
-namespace crocoddyl {
+namespace gepetto {
+  namespace example {
 
 template <typename Scalar>
-DifferentialActionModelFreeFwdDynamicsTpl<Scalar>::DifferentialActionModelFreeFwdDynamicsTpl(
+DifferentialActionModelFreeFwdDynamicsExtForcesTpl<Scalar>::DifferentialActionModelFreeFwdDynamicsExtForcesTpl(
     boost::shared_ptr<StateMultibody> state, boost::shared_ptr<ActuationModelAbstract> actuation,
     boost::shared_ptr<CostModelSum> costs)
     : Base(state, actuation->get_nu(), costs->get_nr()),
@@ -30,20 +31,20 @@ DifferentialActionModelFreeFwdDynamicsTpl<Scalar>::DifferentialActionModelFreeFw
       costs_(costs),
       pinocchio_(*state->get_pinocchio().get()),
       with_armature_(true),
-      armature_(VectorXs::Zero(state->get_nv())) {
+      armature_(VectorXs::Zero((long)state->get_nv())) {
   if (costs_->get_nu() != nu_) {
     throw_pretty("Invalid argument: "
                  << "Costs doesn't have the same control dimension (it should be " + std::to_string(nu_) + ")");
   }
-  Base::set_u_lb(Scalar(-1.) * pinocchio_.effortLimit.tail(nu_));
-  Base::set_u_ub(Scalar(+1.) * pinocchio_.effortLimit.tail(nu_));
+  Base::set_u_lb(Scalar(-1.) * pinocchio_.effortLimit.tail((long)nu_));
+  Base::set_u_ub(Scalar(+1.) * pinocchio_.effortLimit.tail((long)nu_));
 }
 
 template <typename Scalar>
-DifferentialActionModelFreeFwdDynamicsTpl<Scalar>::~DifferentialActionModelFreeFwdDynamicsTpl() {}
+DifferentialActionModelFreeFwdDynamicsExtForcesTpl<Scalar>::~DifferentialActionModelFreeFwdDynamicsExtForcesTpl() {}
 
 template <typename Scalar>
-void DifferentialActionModelFreeFwdDynamicsTpl<Scalar>::calc(
+void DifferentialActionModelFreeFwdDynamicsExtForcesTpl<Scalar>::calc(
     const boost::shared_ptr<DifferentialActionDataAbstract>& data, const Eigen::Ref<const VectorXs>& x,
     const Eigen::Ref<const VectorXs>& u) {
   if (static_cast<std::size_t>(x.size()) != state_->get_nx()) {
@@ -56,8 +57,8 @@ void DifferentialActionModelFreeFwdDynamicsTpl<Scalar>::calc(
   }
 
   Data* d = static_cast<Data*>(data.get());
-  const Eigen::VectorBlock<const Eigen::Ref<const VectorXs>, Eigen::Dynamic> q = x.head(state_->get_nq());
-  const Eigen::VectorBlock<const Eigen::Ref<const VectorXs>, Eigen::Dynamic> v = x.tail(state_->get_nv());
+  const Eigen::VectorBlock<const Eigen::Ref<const VectorXs>, Eigen::Dynamic> q = x.head((long)state_->get_nq());
+  const Eigen::VectorBlock<const Eigen::Ref<const VectorXs>, Eigen::Dynamic> v = x.tail((long)state_->get_nv());
 
   actuation_->calc(d->multibody.actuation, x, u);
 
@@ -81,7 +82,7 @@ void DifferentialActionModelFreeFwdDynamicsTpl<Scalar>::calc(
 }
 
 template <typename Scalar>
-void DifferentialActionModelFreeFwdDynamicsTpl<Scalar>::calcDiff(
+void DifferentialActionModelFreeFwdDynamicsExtForcesTpl<Scalar>::calcDiff(
     const boost::shared_ptr<DifferentialActionDataAbstract>& data, const Eigen::Ref<const VectorXs>& x,
     const Eigen::Ref<const VectorXs>& u) {
   if (static_cast<std::size_t>(x.size()) != state_->get_nx()) {
@@ -93,8 +94,8 @@ void DifferentialActionModelFreeFwdDynamicsTpl<Scalar>::calcDiff(
                  << "u has wrong dimension (it should be " + std::to_string(nu_) + ")");
   }
 
-  const std::size_t& nv = state_->get_nv();
-  const Eigen::VectorBlock<const Eigen::Ref<const VectorXs>, Eigen::Dynamic> q = x.head(state_->get_nq());
+  const long& nv = (long)state_->get_nv();
+  const Eigen::VectorBlock<const Eigen::Ref<const VectorXs>, Eigen::Dynamic> q = x.head((long)state_->get_nq());
   const Eigen::VectorBlock<const Eigen::Ref<const VectorXs>, Eigen::Dynamic> v = x.tail(nv);
 
   Data* d = static_cast<Data*>(data.get());
@@ -121,12 +122,12 @@ void DifferentialActionModelFreeFwdDynamicsTpl<Scalar>::calcDiff(
 
 template <typename Scalar>
 boost::shared_ptr<DifferentialActionDataAbstractTpl<Scalar> >
-DifferentialActionModelFreeFwdDynamicsTpl<Scalar>::createData() {
+DifferentialActionModelFreeFwdDynamicsExtForcesTpl<Scalar>::createData() {
   return boost::allocate_shared<Data>(Eigen::aligned_allocator<Data>(), this);
 }
 
 template <typename Scalar>
-bool DifferentialActionModelFreeFwdDynamicsTpl<Scalar>::checkData(
+bool DifferentialActionModelFreeFwdDynamicsExtForcesTpl<Scalar>::checkData(
     const boost::shared_ptr<DifferentialActionDataAbstract>& data) {
   boost::shared_ptr<Data> d = boost::dynamic_pointer_cast<Data>(data);
   if (d != NULL) {
@@ -136,7 +137,7 @@ bool DifferentialActionModelFreeFwdDynamicsTpl<Scalar>::checkData(
   }
 }
 template <typename Scalar>
-void DifferentialActionModelFreeFwdDynamicsTpl<Scalar>::quasiStatic(
+void DifferentialActionModelFreeFwdDynamicsExtForcesTpl<Scalar>::quasiStatic(
     const boost::shared_ptr<DifferentialActionDataAbstract>& data, Eigen::Ref<VectorXs> u,
     const Eigen::Ref<const VectorXs>& x, const std::size_t&, const Scalar&) {
   if (static_cast<std::size_t>(u.size()) != nu_) {
@@ -149,46 +150,46 @@ void DifferentialActionModelFreeFwdDynamicsTpl<Scalar>::quasiStatic(
   }
   // Static casting the data
   Data* d = static_cast<Data*>(data.get());
-  const Eigen::VectorBlock<const Eigen::Ref<const VectorXs>, Eigen::Dynamic> q = x.head(state_->get_nq());
+  const Eigen::VectorBlock<const Eigen::Ref<const VectorXs>, Eigen::Dynamic> q = x.head((long)state_->get_nq());
 
   // Check the velocity input is zero
-  assert_pretty(x.tail(state_->get_nv()).isZero(), "The velocity input should be zero for quasi-static to work.");
+  assert_pretty(x.tail((long)state_->get_nv()).isZero(), "The velocity input should be zero for quasi-static to work.");
 
   d->pinocchio.tau =
-      pinocchio::rnea(pinocchio_, d->pinocchio, q, VectorXs::Zero(state_->get_nv()), VectorXs::Zero(state_->get_nv()));
+      pinocchio::rnea(pinocchio_, d->pinocchio, q, VectorXs::Zero((long)state_->get_nv()), VectorXs::Zero((long)state_->get_nv()));
 
-  d->tmp_xstatic.head(state_->get_nq()) = q;
-  actuation_->calc(d->multibody.actuation, d->tmp_xstatic, VectorXs::Zero(nu_));
-  actuation_->calcDiff(d->multibody.actuation, d->tmp_xstatic, VectorXs::Zero(nu_));
+  d->tmp_xstatic.head((long)state_->get_nq()) = q;
+  actuation_->calc(d->multibody.actuation, d->tmp_xstatic, VectorXs::Zero((long)nu_));
+  actuation_->calcDiff(d->multibody.actuation, d->tmp_xstatic, VectorXs::Zero((long)nu_));
 
   u.noalias() = pseudoInverse(d->multibody.actuation->dtau_du) * d->pinocchio.tau;
   d->pinocchio.tau.setZero();
 }
 
 template <typename Scalar>
-pinocchio::ModelTpl<Scalar>& DifferentialActionModelFreeFwdDynamicsTpl<Scalar>::get_pinocchio() const {
+pinocchio::ModelTpl<Scalar>& DifferentialActionModelFreeFwdDynamicsExtForcesTpl<Scalar>::get_pinocchio() const {
   return pinocchio_;
 }
 
 template <typename Scalar>
 const boost::shared_ptr<ActuationModelAbstractTpl<Scalar> >&
-DifferentialActionModelFreeFwdDynamicsTpl<Scalar>::get_actuation() const {
+DifferentialActionModelFreeFwdDynamicsExtForcesTpl<Scalar>::get_actuation() const {
   return actuation_;
 }
 
 template <typename Scalar>
-const boost::shared_ptr<CostModelSumTpl<Scalar> >& DifferentialActionModelFreeFwdDynamicsTpl<Scalar>::get_costs()
+const boost::shared_ptr<CostModelSumTpl<Scalar> >& DifferentialActionModelFreeFwdDynamicsExtForcesTpl<Scalar>::get_costs()
     const {
   return costs_;
 }
 
 template <typename Scalar>
-const typename MathBaseTpl<Scalar>::VectorXs& DifferentialActionModelFreeFwdDynamicsTpl<Scalar>::get_armature() const {
+const typename MathBaseTpl<Scalar>::VectorXs& DifferentialActionModelFreeFwdDynamicsExtForcesTpl<Scalar>::get_armature() const {
   return armature_;
 }
 
 template <typename Scalar>
-void DifferentialActionModelFreeFwdDynamicsTpl<Scalar>::set_armature(const VectorXs& armature) {
+void DifferentialActionModelFreeFwdDynamicsExtForcesTpl<Scalar>::set_armature(const VectorXs& armature) {
   if (static_cast<std::size_t>(armature.size()) != state_->get_nv()) {
     throw_pretty("Invalid argument: "
                  << "The armature dimension is wrong (it should be " + std::to_string(state_->get_nv()) + ")");
@@ -198,4 +199,5 @@ void DifferentialActionModelFreeFwdDynamicsTpl<Scalar>::set_armature(const Vecto
   with_armature_ = false;
 }
 
-}  // namespace crocoddyl
+}
+}

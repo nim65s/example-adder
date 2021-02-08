@@ -6,16 +6,21 @@
 // All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "python/crocoddyl/multibody/multibody.hpp"
-#include "python/crocoddyl/core/diff-action-base.hpp"
-#include "crocoddyl/multibody/actions/free-fwddyn.hpp"
+//#include "python/crocoddyl/multibody/multibody.hpp"
+//#include "python/crocoddyl/core/diff-action-base.hpp"
+#include <pinocchio/fwd.hpp>
+#include <boost/python.hpp>
 
-namespace crocoddyl {
-namespace python {
+#include "example-adder/ext-forces.hpp"
 
-void exposeDifferentialActionFreeFwdDynamics() {
-  bp::class_<DifferentialActionModelFreeFwdDynamics, bp::bases<DifferentialActionModelAbstract> >(
-      "DifferentialActionModelFreeFwdDynamics",
+namespace gepetto {
+namespace example {
+
+namespace bp = boost::python;
+
+void exposeDifferentialActionFreeFwdDynamicsExtForces() {
+  bp::class_<DifferentialActionModelFreeFwdDynamicsExtForces, bp::bases<DifferentialActionModelAbstract> >(
+      "DifferentialActionModelFreeFwdDynamicsExtForces",
       "Differential action model for free forward dynamics in multibody systems.\n\n"
       "This class implements a the dynamics using Articulate Body Algorithm (ABA),\n"
       "or a custom implementation in case of system with armatures. If you want to\n"
@@ -27,23 +32,23 @@ void exposeDifferentialActionFreeFwdDynamics() {
                                                  ":param state: multibody state\n"
                                                  ":param actuation: abstract actuation model\n"
                                                  ":param costs: stack of cost functions"))
-      .def<void (DifferentialActionModelFreeFwdDynamics::*)(const boost::shared_ptr<DifferentialActionDataAbstract>&,
+      .def<void (DifferentialActionModelFreeFwdDynamicsExtForces::*)(const boost::shared_ptr<DifferentialActionDataAbstract>&,
                                                             const Eigen::Ref<const Eigen::VectorXd>&,
                                                             const Eigen::Ref<const Eigen::VectorXd>&)>(
-          "calc", &DifferentialActionModelFreeFwdDynamics::calc, bp::args("self", "data", "x", "u"),
+          "calc", &DifferentialActionModelFreeFwdDynamicsExtForces::calc, bp::args("self", "data", "x", "u"),
           "Compute the next state and cost value.\n\n"
           "It describes the time-continuous evolution of the multibody system without any contact.\n"
           "Additionally it computes the cost value associated to this state and control pair.\n"
           ":param data: free forward-dynamics action data\n"
           ":param x: time-continuous state vector\n"
           ":param u: time-continuous control input")
-      .def<void (DifferentialActionModelFreeFwdDynamics::*)(const boost::shared_ptr<DifferentialActionDataAbstract>&,
+      .def<void (DifferentialActionModelFreeFwdDynamicsExtForces::*)(const boost::shared_ptr<DifferentialActionDataAbstract>&,
                                                             const Eigen::Ref<const Eigen::VectorXd>&)>(
           "calc", &DifferentialActionModelAbstract::calc, bp::args("self", "data", "x"))
-      .def<void (DifferentialActionModelFreeFwdDynamics::*)(const boost::shared_ptr<DifferentialActionDataAbstract>&,
+      .def<void (DifferentialActionModelFreeFwdDynamicsExtForces::*)(const boost::shared_ptr<DifferentialActionDataAbstract>&,
                                                             const Eigen::Ref<const Eigen::VectorXd>&,
                                                             const Eigen::Ref<const Eigen::VectorXd>&)>(
-          "calcDiff", &DifferentialActionModelFreeFwdDynamics::calcDiff, bp::args("self", "data", "x", "u"),
+          "calcDiff", &DifferentialActionModelFreeFwdDynamicsExtForces::calcDiff, bp::args("self", "data", "x", "u"),
           "Compute the derivatives of the differential multibody system (free of contact) and\n"
           "its cost functions.\n\n"
           "It computes the partial derivatives of the differential multibody system and the\n"
@@ -53,56 +58,56 @@ void exposeDifferentialActionFreeFwdDynamics() {
           ":param data: free forward-dynamics action data\n"
           ":param x: time-continuous state vector\n"
           ":param u: time-continuous control input\n")
-      .def<void (DifferentialActionModelFreeFwdDynamics::*)(const boost::shared_ptr<DifferentialActionDataAbstract>&,
+      .def<void (DifferentialActionModelFreeFwdDynamicsExtForces::*)(const boost::shared_ptr<DifferentialActionDataAbstract>&,
                                                             const Eigen::Ref<const Eigen::VectorXd>&)>(
           "calcDiff", &DifferentialActionModelAbstract::calcDiff, bp::args("self", "data", "x"))
-      .def("createData", &DifferentialActionModelFreeFwdDynamics::createData, bp::args("self"),
+      .def("createData", &DifferentialActionModelFreeFwdDynamicsExtForces::createData, bp::args("self"),
            "Create the free forward dynamics differential action data.")
       .add_property(
           "pinocchio",
-          bp::make_function(&DifferentialActionModelFreeFwdDynamics::get_pinocchio, bp::return_internal_reference<>()),
+          bp::make_function(&DifferentialActionModelFreeFwdDynamicsExtForces::get_pinocchio, bp::return_internal_reference<>()),
           "multibody model (i.e. pinocchio model)")
       .add_property("actuation",
-                    bp::make_function(&DifferentialActionModelFreeFwdDynamics::get_actuation,
+                    bp::make_function(&DifferentialActionModelFreeFwdDynamicsExtForces::get_actuation,
                                       bp::return_value_policy<bp::return_by_value>()),
                     "actuation model")
       .add_property("costs",
-                    bp::make_function(&DifferentialActionModelFreeFwdDynamics::get_costs,
+                    bp::make_function(&DifferentialActionModelFreeFwdDynamicsExtForces::get_costs,
                                       bp::return_value_policy<bp::return_by_value>()),
                     "total cost model")
       .add_property(
           "armature",
-          bp::make_function(&DifferentialActionModelFreeFwdDynamics::get_armature, bp::return_internal_reference<>()),
-          bp::make_function(&DifferentialActionModelFreeFwdDynamics::set_armature),
+          bp::make_function(&DifferentialActionModelFreeFwdDynamicsExtForces::get_armature, bp::return_internal_reference<>()),
+          bp::make_function(&DifferentialActionModelFreeFwdDynamicsExtForces::set_armature),
           "set an armature mechanism in the joints");
 
-  bp::register_ptr_to_python<boost::shared_ptr<DifferentialActionDataFreeFwdDynamics> >();
+  bp::register_ptr_to_python<boost::shared_ptr<DifferentialActionDataFreeFwdDynamicsExtForces> >();
 
-  bp::class_<DifferentialActionDataFreeFwdDynamics, bp::bases<DifferentialActionDataAbstract> >(
-      "DifferentialActionDataFreeFwdDynamics", "Action data for the free forward dynamics system.",
-      bp::init<DifferentialActionModelFreeFwdDynamics*>(bp::args("self", "model"),
+  bp::class_<DifferentialActionDataFreeFwdDynamicsExtForces, bp::bases<DifferentialActionDataAbstract> >(
+      "DifferentialActionDataFreeFwdDynamicsExtForces", "Action data for the free forward dynamics system.",
+      bp::init<DifferentialActionModelFreeFwdDynamicsExtForces*>(bp::args("self", "model"),
                                                         "Create free forward-dynamics action data.\n\n"
                                                         ":param model: free forward-dynamics action model"))
       .add_property(
           "pinocchio",
-          bp::make_getter(&DifferentialActionDataFreeFwdDynamics::pinocchio, bp::return_internal_reference<>()),
+          bp::make_getter(&DifferentialActionDataFreeFwdDynamicsExtForces::pinocchio, bp::return_internal_reference<>()),
           "pinocchio data")
       .add_property(
           "multibody",
-          bp::make_getter(&DifferentialActionDataFreeFwdDynamics::multibody, bp::return_internal_reference<>()),
+          bp::make_getter(&DifferentialActionDataFreeFwdDynamicsExtForces::multibody, bp::return_internal_reference<>()),
           "multibody data")
       .add_property("costs",
-                    bp::make_getter(&DifferentialActionDataFreeFwdDynamics::costs,
+                    bp::make_getter(&DifferentialActionDataFreeFwdDynamicsExtForces::costs,
                                     bp::return_value_policy<bp::return_by_value>()),
                     "total cost data")
       .add_property("Minv",
-                    bp::make_getter(&DifferentialActionDataFreeFwdDynamics::Minv, bp::return_internal_reference<>()),
+                    bp::make_getter(&DifferentialActionDataFreeFwdDynamicsExtForces::Minv, bp::return_internal_reference<>()),
                     "inverse of the joint-space inertia matrix")
       .add_property(
           "u_drift",
-          bp::make_getter(&DifferentialActionDataFreeFwdDynamics::u_drift, bp::return_internal_reference<>()),
+          bp::make_getter(&DifferentialActionDataFreeFwdDynamicsExtForces::u_drift, bp::return_internal_reference<>()),
           "force-bias vector that accounts for control, Coriolis and gravitational effects");
 }
 
-}  // namespace python
-}  // namespace crocoddyl
+}
+}

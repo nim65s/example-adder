@@ -38,6 +38,7 @@ endif()
 
 # Main Library
 set(${PROJECT_NAME}_HEADERS
+  include/${PROJECT_NAME}/fwd.hpp
   include/${PROJECT_NAME}/croco.hpp
   include/${PROJECT_NAME}/ext-forces.hpp
   include/${PROJECT_NAME}/gepadd.hpp
