@@ -1,12 +1,14 @@
 ///////////////////////////////////////////////////////////////////////////////
-// BSD 3-Clause License
+// Writting a DAM similar to free-fwddyn but taking into account exterior forces applying on the model
 //
-// Copyright (C) 2019-2020, LAAS-CNRS, University of Edinburgh
+//
+// Copyright (C) 2018-2020, LAAS-CNRS, University of Edinburgh
 // Copyright note valid unless otherwise stated in individual files.
 // All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "crocoddyl/core/utils/exception.hpp"
+
 #include "example-adder/ext-forces.hpp"
 
 #include <pinocchio/algorithm/aba.hpp>
@@ -20,21 +22,25 @@
 #include <pinocchio/algorithm/cholesky.hpp>
 
 namespace gepetto {
-  namespace example {
-
+namespace example {
 template <typename Scalar>
 DifferentialActionModelFreeFwdDynamicsExtForcesTpl<Scalar>::DifferentialActionModelFreeFwdDynamicsExtForcesTpl(
     boost::shared_ptr<StateMultibody> state, boost::shared_ptr<ActuationModelAbstract> actuation,
-    boost::shared_ptr<CostModelSum> costs)
+    boost::shared_ptr<CostModelSum> costs, const ForceAlignedVector& extforces)
     : Base(state, actuation->get_nu(), costs->get_nr()),
       actuation_(actuation),
       costs_(costs),
       pinocchio_(*state->get_pinocchio().get()),
       with_armature_(true),
-      armature_(VectorXs::Zero((long)state->get_nv())) {
+      armature_(VectorXs::Zero((long)state->get_nv())),
+      extforces_(extforces) {
   if (costs_->get_nu() != nu_) {
     throw_pretty("Invalid argument: "
                  << "Costs doesn't have the same control dimension (it should be " + std::to_string(nu_) + ")");
+  }
+  if (static_cast<int>(extforces_.size()) != pinocchio_.njoints) {
+    throw_pretty("Invalid argument: "
+                 << "extforces is of wrong dimension: it should be " + std::to_string(pinocchio_.njoints) + ")");
   }
   Base::set_u_lb(Scalar(-1.) * pinocchio_.effortLimit.tail((long)nu_));
   Base::set_u_ub(Scalar(+1.) * pinocchio_.effortLimit.tail((long)nu_));
@@ -64,10 +70,10 @@ void DifferentialActionModelFreeFwdDynamicsExtForcesTpl<Scalar>::calc(
 
   // Computing the dynamics using ABA or manually for armature case
   if (with_armature_) {
-    d->xout = pinocchio::aba(pinocchio_, d->pinocchio, q, v, d->multibody.actuation->tau);
+    d->xout = pinocchio::aba(pinocchio_, d->pinocchio, q, v, d->multibody.actuation->tau, extforces_);
     pinocchio::updateGlobalPlacements(pinocchio_, d->pinocchio);
   } else {
-    pinocchio::computeAllTerms(pinocchio_, d->pinocchio, q, v);
+    pinocchio::computeAllTerms(pinocchio_, d->pinocchio, q, v); //TODO: adapt this to take extforces_ into account
     d->pinocchio.M.diagonal() += armature_;
     pinocchio::cholesky::decompose(pinocchio_, d->pinocchio);
     d->Minv.setZero();
@@ -104,11 +110,12 @@ void DifferentialActionModelFreeFwdDynamicsExtForcesTpl<Scalar>::calcDiff(
 
   // Computing the dynamics derivatives
   if (with_armature_) {
-    pinocchio::computeABADerivatives(pinocchio_, d->pinocchio, q, v, d->multibody.actuation->tau, d->Fx.leftCols(nv),
+    pinocchio::computeABADerivatives(pinocchio_, d->pinocchio, q, v, d->multibody.actuation->tau,
+                                     extforces_, d->Fx.leftCols(nv),
                                      d->Fx.rightCols(nv), d->pinocchio.Minv);
     d->Fx.noalias() += d->pinocchio.Minv * d->multibody.actuation->dtau_dx;
     d->Fu.noalias() = d->pinocchio.Minv * d->multibody.actuation->dtau_du;
-  } else {
+  } else { //TODO: adapt this to take extforces_ into account
     pinocchio::computeRNEADerivatives(pinocchio_, d->pinocchio, q, v, d->xout);
     d->dtau_dx.leftCols(nv) = d->multibody.actuation->dtau_dx.leftCols(nv) - d->pinocchio.dtau_dq;
     d->dtau_dx.rightCols(nv) = d->multibody.actuation->dtau_dx.rightCols(nv) - d->pinocchio.dtau_dv;
@@ -156,7 +163,8 @@ void DifferentialActionModelFreeFwdDynamicsExtForcesTpl<Scalar>::quasiStatic(
   assert_pretty(x.tail((long)state_->get_nv()).isZero(), "The velocity input should be zero for quasi-static to work.");
 
   d->pinocchio.tau =
-      pinocchio::rnea(pinocchio_, d->pinocchio, q, VectorXs::Zero((long)state_->get_nv()), VectorXs::Zero((long)state_->get_nv()));
+      pinocchio::rnea(pinocchio_, d->pinocchio, q, VectorXs::Zero((long)state_->get_nv()),
+                      VectorXs::Zero((long)state_->get_nv()), extforces_);
 
   d->tmp_xstatic.head((long)state_->get_nq()) = q;
   actuation_->calc(d->multibody.actuation, d->tmp_xstatic, VectorXs::Zero((long)nu_));
@@ -199,5 +207,5 @@ void DifferentialActionModelFreeFwdDynamicsExtForcesTpl<Scalar>::set_armature(co
   with_armature_ = false;
 }
 
-}
-}
+}  // namespace example
+}  // namespace gepetto

@@ -1,13 +1,15 @@
 ///////////////////////////////////////////////////////////////////////////////
-// BSD 3-Clause License
+// Writting a DAM similar to free-fwddyn but taking into account exterior forces applying on the model
 //
-// Copyright (C) 2019-2020, LAAS-CNRS, University of Edinburgh
+//
+// Copyright (C) 2018-2020, LAAS-CNRS, University of Edinburgh
 // Copyright note valid unless otherwise stated in individual files.
 // All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CROCODDYL_MULTIBODY_ACTIONS_FREE_FWDDYN_HPP_
-#define CROCODDYL_MULTIBODY_ACTIONS_FREE_FWDDYN_HPP_
+// can I put whatever I want here?
+#ifndef __example_adder_ext_forces__
+#define __example_adder_ext_forces__
 
 #include <stdexcept>
 
@@ -28,7 +30,7 @@
 namespace gepetto {
 namespace example {
 
-  using namespace crocoddyl;
+using namespace crocoddyl;
 
 template <typename _Scalar>
 class DifferentialActionModelFreeFwdDynamicsExtForcesTpl : public DifferentialActionModelAbstractTpl<_Scalar> {
@@ -46,9 +48,12 @@ class DifferentialActionModelFreeFwdDynamicsExtForcesTpl : public DifferentialAc
   typedef typename MathBase::VectorXs VectorXs;
   typedef typename MathBase::MatrixXs MatrixXs;
 
+  typedef PINOCCHIO_ALIGNED_STD_VECTOR(Force) ForceAlignedVector; // is typename needed? probably not
+
   DifferentialActionModelFreeFwdDynamicsExtForcesTpl(boost::shared_ptr<StateMultibody> state,
                                             boost::shared_ptr<ActuationModelAbstract> actuation,
-                                            boost::shared_ptr<CostModelSum> costs);
+                                            boost::shared_ptr<CostModelSum> costs,
+                                            const ForceAlignedVector& extforces);
   virtual ~DifferentialActionModelFreeFwdDynamicsExtForcesTpl();
 
   virtual void calc(const boost::shared_ptr<DifferentialActionDataAbstract>& data, const Eigen::Ref<const VectorXs>& x,
@@ -83,6 +88,7 @@ class DifferentialActionModelFreeFwdDynamicsExtForcesTpl : public DifferentialAc
   pinocchio::ModelTpl<Scalar>& pinocchio_;
   bool with_armature_;
   VectorXs armature_;
+  ForceAlignedVector extforces_; // does is have to be a shared pointer?
 };
 
 template <typename _Scalar>
@@ -131,12 +137,9 @@ struct DifferentialActionDataFreeFwdDynamicsExtForcesTpl : public DifferentialAc
   using Base::xout;
 };
 
-}  // namespace crocoddyl
-}
+}  // namespace example
+}  // namespace gepetto
 
-/* --- Details -------------------------------------------------------------- */
-/* --- Details -------------------------------------------------------------- */
-/* --- Details -------------------------------------------------------------- */
-#include <example-adder/ext-forces.hxx>
+#include "example-adder/ext-forces.hxx"
 
-#endif  // CROCODDYL_MULTIBODY_ACTIONS_FREE_FWDDYN_HPP_
+#endif

@@ -1,16 +1,17 @@
 ///////////////////////////////////////////////////////////////////////////////
+// Writting a DAM similar to free-fwddyn but taking into account exterior forces applying on the model
 // BSD 3-Clause License
 //
-// Copyright (C) 2019-2020, LAAS-CNRS, University of Edinburgh
+// Copyright (C) 2018-2020, LAAS-CNRS, University of Edinburgh
 // Copyright note valid unless otherwise stated in individual files.
 // All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
 
-//#include "python/crocoddyl/multibody/multibody.hpp"
-//#include "python/crocoddyl/core/diff-action-base.hpp"
 #include <pinocchio/fwd.hpp>
+
 #include <boost/python.hpp>
 
+#include "example-adder/python.hpp"
 #include "example-adder/ext-forces.hpp"
 
 namespace gepetto {
@@ -21,17 +22,22 @@ namespace bp = boost::python;
 void exposeDifferentialActionFreeFwdDynamicsExtForces() {
   bp::class_<DifferentialActionModelFreeFwdDynamicsExtForces, bp::bases<DifferentialActionModelAbstract> >(
       "DifferentialActionModelFreeFwdDynamicsExtForces",
-      "Differential action model for free forward dynamics in multibody systems.\n\n"
+      "WORK IN PROGRESS (Feb.2021) \n"
+      "Differential action model for free forward dynamics in multibody systems subject to external forces.\n\n"
       "This class implements a the dynamics using Articulate Body Algorithm (ABA),\n"
       "or a custom implementation in case of system with armatures. If you want to\n"
       "include the armature, you need to use setArmature(). On the other hand, the\n"
-      "stack of cost functions are implemented in CostModelSum().",
+      "stack of cost functions are implemented in CostModelSum().\n"
+      "CAUTION: exterior forces only dealt with in the case of ABA use, not yet for the custom implementation",
+
       bp::init<boost::shared_ptr<StateMultibody>, boost::shared_ptr<ActuationModelAbstract>,
-               boost::shared_ptr<CostModelSum> >(bp::args("self", "state", "actuation", "costs"),
+               boost::shared_ptr<CostModelSum>,
+               PINOCCHIO_ALIGNED_STD_VECTOR(Force) >(bp::args("self", "state", "actuation", "costs", "extforces"),
                                                  "Initialize the free forward-dynamics action model.\n\n"
                                                  ":param state: multibody state\n"
                                                  ":param actuation: abstract actuation model\n"
-                                                 ":param costs: stack of cost functions"))
+                                                 ":param costs: stack of cost functions\n"
+                                                 ":param extforces: vector of exterior forces expressed in the local frame of the joints"))
       .def<void (DifferentialActionModelFreeFwdDynamicsExtForces::*)(const boost::shared_ptr<DifferentialActionDataAbstract>&,
                                                             const Eigen::Ref<const Eigen::VectorXd>&,
                                                             const Eigen::Ref<const Eigen::VectorXd>&)>(
@@ -84,7 +90,7 @@ void exposeDifferentialActionFreeFwdDynamicsExtForces() {
   bp::register_ptr_to_python<boost::shared_ptr<DifferentialActionDataFreeFwdDynamicsExtForces> >();
 
   bp::class_<DifferentialActionDataFreeFwdDynamicsExtForces, bp::bases<DifferentialActionDataAbstract> >(
-      "DifferentialActionDataFreeFwdDynamicsExtForces", "Action data for the free forward dynamics system.",
+      "DifferentialActionDataFreeFwdDynamicsExtForces", "Action data for the free forward dynamics system subject to external forces.",
       bp::init<DifferentialActionModelFreeFwdDynamicsExtForces*>(bp::args("self", "model"),
                                                         "Create free forward-dynamics action data.\n\n"
                                                         ":param model: free forward-dynamics action model"))
@@ -109,5 +115,5 @@ void exposeDifferentialActionFreeFwdDynamicsExtForces() {
           "force-bias vector that accounts for control, Coriolis and gravitational effects");
 }
 
-}
-}
+}  // namespace example
+}  // namespace gepetto

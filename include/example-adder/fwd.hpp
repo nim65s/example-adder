@@ -11,6 +11,7 @@ namespace gepetto {
 
     typedef DifferentialActionDataFreeFwdDynamicsExtForcesTpl<double> DifferentialActionDataFreeFwdDynamicsExtForces;
     typedef DifferentialActionModelFreeFwdDynamicsExtForcesTpl<double> DifferentialActionModelFreeFwdDynamicsExtForces;
+    typedef pinocchio::ForceTpl<double> Force;
 
   }
 }
